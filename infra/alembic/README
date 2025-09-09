@@ -1,0 +1,5 @@
+Comandos útiles:
+- Inicializar (ya creado): infra/alembic
+- Crear nueva migración: alembic -c infra/alembic.ini revision --autogenerate -m "init"
+- Aplicar migraciones: alembic -c infra/alembic.ini upgrade head
+- Retroceder: alembic -c infra/alembic.ini downgrade -1 
