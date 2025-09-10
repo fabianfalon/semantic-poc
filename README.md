@@ -49,10 +49,14 @@ semantic-poc/
 │   │   ├── content_text_spliter.py
 │   │   ├── document.py
 │   │   ├── document_repository.py
-│   │   └── services.py
-│   ├── infrastructure/          # Adapters (DB, text splitter, ORM)
+│   │   └── embeddings.py        # EmbeddingGenerator interface
+│   ├── infrastructure/          # Adapters (DB, text splitter, ORM, embeddings)
 │   │   ├── database.py
-│   │   ├── text_splitter.py
+│   │   ├── splitter/
+│   │   │   └── langchain_text_splitter.py
+│   │   ├── embeddings/
+│   │   │   ├── openai_generator.py
+│   │   │   └── mock_generator.py
 │   │   └── postgresql/
 │   │       └── repositories.py
 │   ├── config.py
@@ -90,10 +94,19 @@ This starts:
 - `db`: PostgreSQL with pgvector extension
 - `adminer`: DB client at `http://localhost:8080`
 
-Apply migrations (first time):
+Apply migrations:
 ```bash
+# If DB is fresh and you only need to apply existing migrations
+make alembic-up
+
+# If you need to create a new revision from current models
 make alembic-rev m="init"
 make alembic-up
+
+# If Alembic complains DB isn't up-to-date, you can align it:
+# alembic -c infra/alembic.ini current
+# alembic -c infra/alembic.ini heads
+# alembic -c infra/alembic.ini stamp head
 ```
 
 Stop services:
@@ -105,7 +118,7 @@ make down
 
 Create a `.env` at repo root (optional):
 ```
-# Use OpenAI embeddings when provided
+# Use OpenAI embeddings when provided (optional)
 OPENAI_API_KEY=sk-...
 
 # Force mock embeddings (deterministic 3072-dim vectors)
@@ -169,15 +182,20 @@ Response
 ]
 ```
 
-## Development Notes
+## Architecture Notes
 
-- Splitting: `RecursiveCharacterTextSplitter` (tunable `CHUNK_SIZE`, `OVERLAP`)
-- Embeddings:
-  - If `OPENAI_API_KEY` is present and `USE_EMBEDDINGS_MOCK` is not set to true, the service uses OpenAI `text-embedding-3-large` (3072 dims)
-  - Otherwise, it uses a deterministic mock (also 3072 dims) so create/search remain consistent without external services
-- Storage:
-  - SQLAlchemy ORM with a `Vector(3072)` column on `document_chunks`
-  - Distance operator `<->` for similarity; the application turns distance into a percentage-like score
+- **Splitting**: `RecursiveCharacterTextSplitter` (tunable `CHUNK_SIZE`, `OVERLAP`)
+- **Embeddings**:
+  - Interfaz de dominio: `EmbeddingGenerator` (`src/domain/embeddings.py`)
+  - Implementaciones:
+    - OpenAI: `src/infrastructure/embeddings/openai_generator.py` (`text-embedding-3-large`, 3072 dims)
+    - Mock: `src/infrastructure/embeddings/mock_generator.py` (determinístico, 3072 dims)
+  - Selección por configuración (en `src/api/v1/dependencies.py`):
+    - Usa OpenAI si `OPENAI_API_KEY` está definido y `USE_EMBEDDINGS_MOCK` no es `true`
+    - Caso contrario usa Mock
+- **Storage**:
+  - SQLAlchemy ORM con una columna `Vector(3072)` en `document_chunks`
+  - Operador de distancia `<->` para similitud; la aplicación convierte la distancia en un porcentaje legible
 
 ## Running Tests
 
@@ -185,12 +203,12 @@ Response
 pip install -r requirements-tests.txt
 PYTHONPATH=. pytest
 ```
-(or use `make test` if provided in the Makefile.)
+(or use `make test`.)
 
 ## Roadmap
 
+- [x] Plug-in support for alternative embedding providers (OpenAI/Mock)
 - [ ] Add pagination and metadata to search responses
-- [ ] Plug-in support for alternative embedding providers
 - [ ] Background ingestion pipeline and batch processing
 
 ---
@@ -199,4 +217,4 @@ PYTHONPATH=. pytest
 
 - **API Docs (Swagger)**: http://localhost:8000/docs
 - **API Docs (ReDoc)**: http://localhost:8000/redoc
-- **Adminer**: http://localhost:8080 (Server: `db`, User: `user`, Password: `password`, DB: `embeddings_db`) 
+- **Adminer**: http://localhost:8080 (Server: `db`, User: `user`, Password: `password`, DB: `embeddings_db`)

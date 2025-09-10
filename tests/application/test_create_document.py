@@ -4,6 +4,12 @@ from src.application.create_document import CreateDocumentUseCase
 from src.domain.content_text_spliter import ContentTextSplitter
 from src.domain.document import Document, DocumentChunk
 from src.domain.document_repository import DocumentRepository
+from src.domain.embeddings import EmbeddingGenerator
+
+
+class FakeEmbeddings(EmbeddingGenerator):
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        return [[0.0] * 3072 for _ in texts]
 
 
 class FakeSplitter(ContentTextSplitter):
@@ -45,11 +51,12 @@ class FakeRepo(DocumentRepository):
 def test_create_document_use_case():
     repo = FakeRepo()
     splitter = FakeSplitter()
-    use_case = CreateDocumentUseCase(repo, splitter)
+    embeddings = FakeEmbeddings()
+    use_case = CreateDocumentUseCase(repo, splitter, embeddings)
 
     result = use_case.execute("Title", "abcdefghij")
 
     assert "document" in result
     assert "chunks" in result
     assert result["document"]["title"] == "Title"
-    assert len(result["chunks"]) == 2 
+    assert len(result["chunks"]) == 2

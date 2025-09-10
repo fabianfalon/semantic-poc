@@ -1,6 +1,7 @@
 alembic==1.16.5
 fastapi[all]==0.116.1
 pydantic>=2.3.0
+pydantic-settings>=2.0.0
 python-dotenv
 sqlalchemy==2.0.43
 sqlalchemy-utils==0.42.0
@@ -8,4 +9,3 @@ psycopg2-binary==2.9.10
 langchain==0.3.27
 openai==1.107.0
 pgvector==0.3.4
-

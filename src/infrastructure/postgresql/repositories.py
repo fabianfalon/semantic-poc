@@ -71,18 +71,23 @@ class PostgresDocumentRepository(DocumentRepositoryInterface):
         self.db.refresh(db_chunk)
         return db_chunk
 
-    def search_similar(self, query_embedding: list[float], limit: int = 5) -> list[dict]:
+    def search_similar(self, query_embedding: list[float], limit: int = 5, min_similarity: float = 0.0) -> list[dict]:
         sql = text(
             """
-        SELECT c.id AS id, c.document_id AS document_id, c.content AS content, d.title AS title,
-               (c.embedding <-> :query) AS distance
+        SELECT c.id AS id,
+               c.document_id AS document_id,
+               c.content AS content,
+               d.title AS title,
+               (1 - (c.embedding <=> :query)) AS similarity
         FROM document_chunks c
         JOIN documents d ON d.id = c.document_id
-        ORDER BY c.embedding <-> :query
+        WHERE (1 - (c.embedding <=> :query)) >= :min_similarity
+        ORDER BY (c.embedding <=> :query) ASC
         LIMIT :limit
         """
         ).bindparams(
             bindparam("query", value=query_embedding, type_=Vector(3072)),
+            bindparam("min_similarity", value=min_similarity, type_=Text().with_variant(Integer, "postgresql")),
             bindparam("limit", value=limit, type_=Integer),
         )
         return self.db.execute(sql).mappings().all()
