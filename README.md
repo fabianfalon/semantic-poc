@@ -186,16 +186,16 @@ Response
 
 - **Splitting**: `RecursiveCharacterTextSplitter` (tunable `CHUNK_SIZE`, `OVERLAP`)
 - **Embeddings**:
-  - Interfaz de dominio: `EmbeddingGenerator` (`src/domain/embeddings.py`)
-  - Implementaciones:
+  - Domain interface: `EmbeddingGenerator` (`src/domain/embeddings.py`)
+  - Implementations:
     - OpenAI: `src/infrastructure/embeddings/openai_generator.py` (`text-embedding-3-large`, 3072 dims)
-    - Mock: `src/infrastructure/embeddings/mock_generator.py` (determinístico, 3072 dims)
-  - Selección por configuración (en `src/api/v1/dependencies.py`):
-    - Usa OpenAI si `OPENAI_API_KEY` está definido y `USE_EMBEDDINGS_MOCK` no es `true`
-    - Caso contrario usa Mock
+    - Mock: `src/infrastructure/embeddings/mock_generator.py` (deterministic, 3072 dims)
+  - Selection via configuration (in `src/api/v1/dependencies.py`):
+    - Uses OpenAI if `OPENAI_API_KEY` is set and `USE_EMBEDDINGS_MOCK` is not `true`
+    - Otherwise uses Mock
 - **Storage**:
-  - SQLAlchemy ORM con una columna `Vector(3072)` en `document_chunks`
-  - Operador de distancia `<->` para similitud; la aplicación convierte la distancia en un porcentaje legible
+  - SQLAlchemy ORM with a `Vector(3072)` column on `document_chunks`
+  - Distance operator `<->` for similarity; the application converts distance into a readable percentage
 
 ## Running Tests
 
