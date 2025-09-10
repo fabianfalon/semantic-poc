@@ -7,6 +7,12 @@ from src.application.search_document import SearchDocumentsUseCase
 from src.domain.content_text_spliter import ContentTextSplitter
 from src.domain.document import Document, DocumentChunk
 from src.domain.document_repository import DocumentRepository
+from src.domain.embeddings import EmbeddingGenerator
+
+
+class FakeEmbeddings(EmbeddingGenerator):
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        return [[0.0] * 3072 for _ in texts]
 
 
 class FakeSplitter(ContentTextSplitter):
@@ -41,7 +47,7 @@ class FakeRepo(DocumentRepository):
         self.chunks.append(persisted)
         return persisted
 
-    def search_similar(self, query_embedding: list[float], limit: int = 5) -> list[dict]:
+    def search_similar(self, query_embedding: list[float], limit: int = 5, min_similarity: float = 0.0) -> list[dict]:
         # Return the last chunk as the top match
         if not self.chunks:
             return []
@@ -52,17 +58,17 @@ class FakeRepo(DocumentRepository):
                 "document_id": last.document_id,
                 "content": last.content,
                 "title": self.docs[-1].title if self.docs else "",
-                "distance": 0.01,
+                "similarity": 0.99,
             }
         ]
 
 
 def get_fake_create_uc() -> CreateDocumentUseCase:
-    return CreateDocumentUseCase(FakeRepo(), FakeSplitter())
+    return CreateDocumentUseCase(FakeRepo(), FakeSplitter(), FakeEmbeddings())
 
 
 def get_fake_search_uc() -> SearchDocumentsUseCase:
-    return SearchDocumentsUseCase(FakeRepo())
+    return SearchDocumentsUseCase(FakeRepo(), FakeEmbeddings())
 
 
 app.dependency_overrides[get_create_document_use_case] = get_fake_create_uc
@@ -91,4 +97,4 @@ def test_search_endpoint():
     assert isinstance(results, list)
     if results:
         assert "chunk_id" in results[0]
-        assert "document_title" in results[0] 
+        assert "document_title" in results[0]

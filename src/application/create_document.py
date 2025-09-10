@@ -3,15 +3,16 @@ import logging
 from src.domain.content_text_spliter import ContentTextSplitter
 from src.domain.document import Document, DocumentChunk
 from src.domain.document_repository import DocumentRepository
-from src.domain.services import generate_embeddings_mock as generate_embeddings
+from src.domain.embeddings import EmbeddingGenerator
 
 logger = logging.getLogger(__name__)
 
 
 class CreateDocumentUseCase:
-    def __init__(self, repository: DocumentRepository, splitter: ContentTextSplitter):
+    def __init__(self, repository: DocumentRepository, splitter: ContentTextSplitter, embeddings: EmbeddingGenerator):
         self.repo = repository
         self.splitter = splitter
+        self.embeddings = embeddings
 
     def execute(self, title: str, content: str) -> dict:
         # Persist document
@@ -22,10 +23,10 @@ class CreateDocumentUseCase:
         # Split content and generate embeddings
         chunks = self.splitter.split(content)
         logger.info(f"Content split into {len(chunks)} chunks")
-        embeddings = generate_embeddings(chunks)
+        vectors = self.embeddings.embed(chunks)
         saved_chunks = []
 
-        for chunk, emb in zip(chunks, embeddings):
+        for chunk, emb in zip(chunks, vectors):
             chunk_obj = DocumentChunk(document_id=saved_doc.id, content=chunk, embedding=emb)
             saved_chunk = self.repo.save_chunk(chunk_obj)
             saved_chunks.append(saved_chunk)

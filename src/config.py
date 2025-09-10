@@ -1,6 +1,7 @@
 from typing import Optional
 
-from pydantic import BaseSettings, SettingsConfigDict
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class CommonSettings(BaseSettings):
@@ -33,8 +34,8 @@ class Settings(CommonSettings, ServerSettings):
     """Main settings class that aggregates all configurations."""
 
     debug: bool = False
-    open_api_key: str
-
+    open_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
+    use_embedding_mock: bool = False
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

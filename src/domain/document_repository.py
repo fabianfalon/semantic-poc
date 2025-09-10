@@ -20,6 +20,6 @@ class DocumentRepository(ABC):
         pass
 
     @abstractmethod
-    def search_similar(self, query_embedding: list[float], limit: int = 5) -> list[dict]:
-        """Search for chunks similar to a given embedding"""
+    def search_similar(self, query_embedding: list[float], limit: int = 5, min_similarity: float = 0.0) -> list[dict]:
+        """Search for chunks similar to a given embedding; return rows with 'similarity' in [0..1]"""
         pass
