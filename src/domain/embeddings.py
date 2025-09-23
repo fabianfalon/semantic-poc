@@ -6,3 +6,5 @@ class EmbeddingGenerator(ABC):
     def embed(self, texts: list[str]) -> list[list[float]]:
         """Return one embedding per input text"""
         pass
+
+    def embed_query(self, texts: str) -> list[list[float]]: ...

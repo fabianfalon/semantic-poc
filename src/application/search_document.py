@@ -12,7 +12,7 @@ class SearchDocumentsUseCase:
         self.embeddings = embeddings
 
     def execute(self, query: str, limit: int = 5, min_similarity: float = 0.0) -> list[dict]:
-        query_emb = self.embeddings.embed([query])[0]
+        query_emb = self.embeddings.embed_query(query)
         logger.info(f"Query embedding: {query_emb}")
         rows = self.repo.search_similar(query_emb, limit, min_similarity)
         logger.info(f"Search results: {rows}")
