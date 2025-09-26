@@ -6,6 +6,7 @@ from src.application.create_document import CreateDocumentUseCase
 from src.application.search_document import SearchDocumentsUseCase
 from src.config import settings
 from src.domain.embeddings import EmbeddingGenerator
+from src.domain.services.document_processing_service import DocumentProcessingService
 from src.infrastructure.embeddings.mock_generator import MockEmbeddingGenerator
 from src.infrastructure.embeddings.ollama_generator import OllamaEmbeddingGenerator
 from src.infrastructure.embeddings.openai_generator import OpenAIEmbeddingGenerator
@@ -35,16 +36,22 @@ def get_embedding_generator() -> EmbeddingGenerator:
     return OpenAIEmbeddingGenerator(api_key=api_key)
 
 
-def get_create_document_use_case(
-    repository: PostgresDocumentRepository = Depends(get_postgresql_document_repository),
+def get_document_processing_service(
     splitter: LangchainTextSplitter = Depends(get_text_splitter),
     embeddings: EmbeddingGenerator = Depends(get_ollama_embedding_generator),
+) -> DocumentProcessingService:
+    return DocumentProcessingService(splitter, embeddings)
+
+
+def get_create_document_use_case(
+    repository: PostgresDocumentRepository = Depends(get_postgresql_document_repository),
+    processing_service: DocumentProcessingService = Depends(get_document_processing_service),
 ) -> CreateDocumentUseCase:
-    return CreateDocumentUseCase(repository, splitter, embeddings)
+    return CreateDocumentUseCase(repository, processing_service)
 
 
 def get_search_documents_use_case(
     repository: PostgresDocumentRepository = Depends(get_postgresql_document_repository),
-    embeddings: EmbeddingGenerator = Depends(get_ollama_embedding_generator),
+    processing_service: DocumentProcessingService = Depends(get_document_processing_service),
 ) -> SearchDocumentsUseCase:
-    return SearchDocumentsUseCase(repository, embeddings)
+    return SearchDocumentsUseCase(repository, processing_service)
