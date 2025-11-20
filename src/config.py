@@ -36,6 +36,8 @@ class Settings(CommonSettings, ServerSettings):
     debug: bool = False
     open_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
     use_embedding_mock: bool = False
+    ollama_api_url: str = ""
+    ollama_model_name: str = ""
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

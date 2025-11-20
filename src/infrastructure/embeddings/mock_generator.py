@@ -19,3 +19,11 @@ class MockEmbeddingGenerator(EmbeddingGenerator):
             norm = np.linalg.norm(vec) or 1.0
             embeddings.append((vec / norm).astype(float).tolist())
         return embeddings
+
+    def embed_query(self, text: str) -> list[float]:
+        h = hashlib.sha256(text.encode("utf-8")).digest()
+        seed = int.from_bytes(h[:8], byteorder="little", signed=False)
+        rng = np.random.default_rng(seed)
+        vec = rng.standard_normal(self.dims)
+        norm = np.linalg.norm(vec) or 1.0
+        return (vec / norm).astype(float).tolist()
